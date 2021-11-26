@@ -1,0 +1,66 @@
+#pragma namespace ("\\\\.\\root\\subscription")
+
+instance of ActiveScriptEventConsumer as $Cons
+{
+    Name = "ROBLOX_END_LISTENER_Win10";
+    ScriptingEngine = "VBScript";
+    ScriptText = 
+    "Dim objFS, objFile\n"
+    "Set objFS = CreateObject(\"Scripting.FileSystemObject\")\n"
+    "Const forAppending=8\n"
+    "Set objFile = objFS.OpenTextFile(\"C:\\scripts\\roblox.log\", forAppending, true)\n"
+    "strDateTime=WMIDateToString(TargetEvent.TargetInstance.CreationDate)\n"
+    "intSeconds=DateDiff(\"s\",strDateTime,Now)\n"
+    "objFile.WriteLine \"End, \" & Now & \",\" & intSeconds & \",\" & TargetEvent.TargetInstance.ProcessId _\n"
+    "   & \",\" & TargetEvent.TargetInstance.Name & \",\" & strDateTime\n"
+    "On Error Resume Next\n"
+    "Err.Clear\n"
+    "Dim service\n"
+    "Set service=CreateObject(\"Schedule.Service\")\n"
+    "call service.Connect()\n"
+    "Dim rootFolder\n"
+    "Set rootFolder=service.GetFolder(\"\\\")\n"
+    "Dim taskCollection\n"
+    "set taskCollection = rootFolder.GetTasks(0)\n"
+    "Dim numberOfTasks\n"
+    "numberOfTasks=taskCollection.Count\n"
+    "If numberOfTasks = 0 then\n"
+    "  objFile.WriteLine \"no tasks registered\"\n"
+    "Else\n"
+    "  Dim registeredTask\n"
+    "  For Each registeredTask In taskCollection\n"
+    "    if registeredTask.Name = \"FiveMinsLeft\" then\n"
+    "        objFile.WriteLine \"disable fiveminsleft task\"\n"
+    "        registeredTask.Enabled=false\n"
+    "    end if\n"
+    "  next\n"
+    "End If\n"
+    "objFile.Close\n"
+    "Function WMIDateToString(dtmDate)\n"
+    "WMIDateToString = CDate(Mid(dtmDate,7,2) & \"/\" & _\n"
+    "Mid(dtmDate,5,2) & \"/\" & _\n"
+    "Left(dtmDate,4) & \" \" & _\n"
+    "Mid(dtmDate,9,2) & \":\" &_\n"
+    "Mid(dtmDate,11,2) & \":\" &_\n"
+    "Mid(dtmDate,13,2))\n"
+    "End Function";
+};
+
+instance of __EventFilter as $Filt
+{
+    Name = "ROBLOX_END_EF_W10";
+    Query = "SELECT * FROM __InstanceDeletionEvent WITHIN 5 "
+        "WHERE TargetInstance ISA \"Win32_Process\" "
+        "AND (TargetInstance.Name = \"Windows10Universal.exe\""
+        "OR TargetInstance.Name = \"RobloxPlayerBeta.exe\" "
+        "OR TargetInstance.Name = \"javaw.exe\" )";
+    QueryLanguage = "WQL";
+    EventNamespace = "root\\cimv2";
+};
+
+instance of __FilterToConsumerBinding
+{
+    Filter = $Filt;
+    Consumer = $Cons;
+};
+
